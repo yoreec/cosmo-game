@@ -1,65 +1,115 @@
-﻿<html lang="ru">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Космо-Зверь: Моем волосы в космосе</title>
+    <title>VITEX: Космо-Зверь</title>
     <style>
         body {
             margin: 0;
+            padding: 0;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
-            background: #1a1a2e;
+            background: linear-gradient(135deg, #1a1a2e, #0f3460);
+            font-family: Arial, sans-serif;
             overflow: hidden;
         }
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
         canvas {
+            width: 100%;
+            height: auto;
             border: 2px solid #ff00ff;
             background: #000033;
+            border-radius: 10px;
         }
         #score {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px #ff00ff;
+        }
+        #title {
+            color: #fff;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+            text-shadow: 2px 2px 4px #ff00ff;
+        }
+        #branding {
             position: absolute;
-            top: 10px;
+            bottom: 10px;
             left: 10px;
             color: #fff;
-            font-family: Arial, sans-serif;
-            font-size: 20px;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px #00ffff;
         }
     </style>
 </head>
 <body>
-    <div id="score">Звезды: 0</div>
-    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <div id="gameContainer">
+        <div id="title">VITEX Космо-Зверь</div>
+        <div id="score">Звезды: 0</div>
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        <div id="branding">Создано VITEX</div>
+    </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('score');
 
+        // Адаптация размеров под экран
+        canvas.width = Math.min(window.innerWidth * 0.9, 400);
+        canvas.height = Math.min(window.innerHeight * 0.7, 600);
+
         // Параметры игры
         let player = {
-            x: 200,
-            y: 500,
+            x: canvas.width / 2 - 25,
+            y: canvas.height - 60,
             width: 50,
             height: 50,
-            speed: 5
+            speed: 5,
+            dx: 0
         };
         let stars = [];
         let meteors = [];
         let score = 0;
 
-        // Загрузка изображений (в реальной версии нужно заменить URL на свои)
+        // Изображения (замените на реальные URL)
         const playerImg = new Image();
-        playerImg.src = 'https://yoreec.github.io/cosmo-game/cat.png?text=Кот'; // Замените на кота-космонавта
+        playerImg.src = 'cat.png'; // Кот-космонавт от VITEX
         const starImg = new Image();
-        starImg.src = 'https://yoreec.github.io/cosmo-game/star.png?text=★'; // Замените на звезду
+        starImg.src = 'star.png'; // Звезда
         const meteorImg = new Image();
-        meteorImg.src = 'https://yoreec.github.io/cosmo-game/meteor.png?text=М'; // Замените на метеорит
+        meteorImg.src = 'meteor.png'; // Метеорит
 
-        // Управление
-        let keys = {};
-        window.addEventListener('keydown', (e) => keys[e.key] = true);
-        window.addEventListener('keyup', (e) => keys[e.key] = false);
+        // Сенсорное управление
+        let touchActive = false;
+        canvas.addEventListener('touchstart', (e) => {
+            touchActive = true;
+            movePlayer(e.touches[0].clientX);
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (touchActive) movePlayer(e.touches[0].clientX);
+        });
+        canvas.addEventListener('touchend', () => {
+            touchActive = false;
+            player.dx = 0;
+        });
+
+        function movePlayer(touchX) {
+            const rect = canvas.getBoundingClientRect();
+            const touchPos = touchX - rect.left;
+            if (touchPos < player.x + player.width / 2) player.dx = -player.speed;
+            else player.dx = player.speed;
+        }
 
         // Создание объектов
         function spawnStar() {
@@ -95,8 +145,9 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Движение игрока
-            if (keys['ArrowLeft'] && player.x > 0) player.x -= player.speed;
-            if (keys['ArrowRight'] && player.x < canvas.width - player.width) player.x += player.speed;
+            player.x += player.dx;
+            if (player.x < 0) player.x = 0;
+            if (player.x > canvas.width - player.width) player.x = canvas.width - player.width;
 
             // Отрисовка игрока
             ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
@@ -119,10 +170,11 @@
                 meteor.y += meteor.speed;
                 ctx.drawImage(meteorImg, meteor.x, meteor.y, meteor.width, meteor.height);
                 if (checkCollision(player, meteor)) {
-                    alert(`Игра окончена! Твой счет: ${score}`);
+                    alert(`Игра окончена! Твой счет: ${score}\nVITEX - чистота с космической силой!`);
                     score = 0;
                     stars = [];
                     meteors = [];
+                    player.x = canvas.width / 2 - 25;
                 }
                 if (meteor.y > canvas.height) meteors.splice(index, 1);
             });
